@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nowcoder.community.dao.UserMapper">
+    <!-- 使用insert,update,delete,select标签写sql
+         id 对应接口中方法的名字
+    -->
+    <!-- 可以将要查询的字段抽取出来 -->
+    <sql id="selectFields">
+        id,username,password,salt,email,type,
+               status,activation_code,header_url,create_time
+    </sql>
+
+    <sql id="insertFields">
+        username,password,salt,email,type,status,activation_code,header_url,create_time
+    </sql>
+
+    <select id="selectById" resultType="User">
+        select <include refid="selectFields"></include> from user where id =#{id}
+    </select>
+
+    <select id="selectByName" resultType="User">
+        select <include refid="selectFields"></include> from user where username =#{username}
+    </select>
+
+    <select id="selectByEmail" resultType="User">
+        select <include refid="selectFields"></include> from user where email =#{email}
+    </select>
+
+    <!-- 添加时如果不是Java自带的类型，则要声明增加的类型，由于id字段自增，mybatis会自动从mysql数据库中获取id并放入到User里面 -->
+    <insert id="insertUser" parameterType="User" keyProperty="id">
+        insert into user (<include refid="insertFields"></include>) values (#{username},#{password},#{salt},#{email},#{type},#{status},#{activationCode},#{headerUrl},#{createTime})
+    </insert>
+
+    <update id="updateStatus" parameterType="int">
+        update user set status = #{status} where id = #{id}
+    </update>
+
+    <update id="updateHeader" parameterType="String">
+        update user set header_url = #{headerUrl} where id = #{id}
+    </update>
+
+    <update id="updatePassword" parameterType="String">
+        update user set password = #{password} where id = #{id}
+    </update>
+</mapper>
