@@ -1,13 +1,14 @@
 package com.nowcoder.community.entity;
 
+
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 
 /**
  * 封装分页相关的信息
  */
-@AllArgsConstructor
-@NoArgsConstructor
+
+
 public class Page {
     // 当前页码
     private int current = 1;
@@ -64,7 +65,7 @@ public class Page {
      * 获取当前页的行
      * @return
      */
-    public int getOffSet() {
+    public int getOffset() {
         // (当前页码-1)*limit
         return (current-1)*limit;
     }

@@ -25,7 +25,7 @@ class CommunityApplicationTests {
 	private DiscussPostMapper discussPostMapper;
 
 	@Test
-	void testSelectByid() {
+	void testSelectById() {
 		System.out.println(userMapper.selectById(101));
 	}
 
