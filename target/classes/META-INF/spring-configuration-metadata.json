@@ -1,0 +1,22 @@
+{
+  "groups": [
+    {
+      "name": "elasticsearch",
+      "type": "com.nowcoder.community.config.ElasticsearchConfig",
+      "sourceType": "com.nowcoder.community.config.ElasticsearchConfig"
+    }
+  ],
+  "properties": [
+    {
+      "name": "elasticsearch.host",
+      "type": "java.lang.String",
+      "sourceType": "com.nowcoder.community.config.ElasticsearchConfig"
+    },
+    {
+      "name": "elasticsearch.port",
+      "type": "java.lang.Integer",
+      "sourceType": "com.nowcoder.community.config.ElasticsearchConfig"
+    }
+  ],
+  "hints": []
+}
