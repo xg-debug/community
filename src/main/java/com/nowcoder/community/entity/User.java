@@ -18,5 +18,5 @@ public class User {
     private int status;
     private String activationCode;
     private String headerUrl;
-    private Date createTime;
+    private Date createTime;// 关注时间
 }

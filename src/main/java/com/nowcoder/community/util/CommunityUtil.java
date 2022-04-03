@@ -39,11 +39,11 @@ public class CommunityUtil {
     }
 
     public static String getJSONString(int code, String msg) {
-        return getJSONString(code,msg);
+        return getJSONString(code, msg, null);
     }
 
     public static String getJSONString(int code) {
-        return getJSONString(code);
+        return getJSONString(code, null, null);
     }
 
     public static void main(String[] args) {

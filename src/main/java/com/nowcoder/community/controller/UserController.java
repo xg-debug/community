@@ -1,9 +1,15 @@
 package com.nowcoder.community.controller;
 
+import com.google.code.kaptcha.Producer;
+import com.nowcoder.community.annotation.LoginRequired;
 import com.nowcoder.community.entity.User;
+import com.nowcoder.community.service.FollowService;
+import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
+import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostHolder;
+import com.nowcoder.community.util.MailClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +18,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -23,7 +31,7 @@ import java.io.OutputStream;
 
 @Controller
 @RequestMapping("/user")
-public class UserController {
+public class UserController implements CommunityConstant {
 
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
@@ -42,18 +50,36 @@ public class UserController {
     @Autowired
     private HostHolder hostHolder;
 
+    @Autowired
+    private MailClient mailClient;
+
+    @Autowired
+    private Producer kaptchaProducer;
+
+    @Autowired
+    private TemplateEngine templateEngine;
+
+    @Autowired
+    private LikeService likeService;
+
+    @Autowired
+    private FollowService followService;
+
     /**
      * / 映射到templates文件夹
+     * 账号设置
      * @return
      */
+    @LoginRequired
     @GetMapping("/setting")
     public String getSettingPage() {
         return "/site/setting";
     }
 
     /**
-     * 处理上传图片请求
+     * 处理上传头像请求
      */
+    @LoginRequired
     @PostMapping("/upload")
     public String uploadHeader(MultipartFile headerImage, Model model) {
         if (headerImage == null) {
@@ -118,6 +144,7 @@ public class UserController {
     /**
      * 处理用户修改密码的请求
      */
+    @LoginRequired
     @PostMapping("/updatePwd")
     public String updatePassword(String oldPwd, String newPwd, Model model, @CookieValue("ticket") String ticket) {
         // 验证原密码是否正确
@@ -143,5 +170,89 @@ public class UserController {
             model.addAttribute("passwordMsg","原密码不正确！");
             return "site/setting";
         }
+    }
+
+    /**
+     * 去忘记密码页面
+     */
+    @GetMapping("/forget")
+    public String getForgetPwdPage() {
+        return "site/forget";
+    }
+
+    /**
+     * 处理重置密码中的【获取验证码】操作
+     */
+    @GetMapping("/getCode")
+    public void getCode(String email) {
+        Context context = new Context();
+        context.setVariable("username","牛客服务中心");
+        // 随机生成验证码
+        //String code = kaptchaProducer.createText();
+        String code = "u5s6dt";
+        context.setVariable("code",code);
+        // 用html模板处理邮件
+        String content = templateEngine.process("/mail/forget",context);
+        mailClient.sendMail(email,"ReSetPassword",content);
+    }
+
+    /**
+     * 重置密码
+     */
+    @PostMapping("/reset")
+    public String reSetPwd(String email, String code, String newPwd, Model model) {
+        // 空值验证
+        // 验证邮箱是否为空
+        if(email==null) {
+            model.addAttribute("emailMsg","邮箱不能为空");
+        }
+        // 验证验证码是否为空
+        if(code==null) {
+            model.addAttribute("codeMsg","验证码不能为空");
+        }
+        // 验证新密码是否为空
+        if(newPwd==null) {
+            model.addAttribute("passwordMsg","新密码不能为空");
+        }
+        // 判断验证码是否正确
+        if("u5s6dt".equals(code)==false) {
+            model.addAttribute("codeMsg","验证码错误！");
+        }
+        // 根据email查询用户，重置密码
+        User user = userService.findUserByEmail(email);
+        userService.updatePassword(user.getId(),newPwd);
+
+        return "redirect:/login";
+    }
+
+    /**
+     * 个人主页
+     * 不仅可以查看当前用户的主页，也能查看其他用户的主页
+     */
+    @GetMapping("/profile/{userId}")
+    public String getProfilePage(@PathVariable("userId") int userId, Model model) {
+        // 查询用户
+        User user = userService.findUserById(userId);
+        model.addAttribute("user", user);
+        if (user == null) {
+            throw new RuntimeException("该用户不存在！");
+        }
+        // 查询关注的数量
+        long followeeCount = followService.findFolloweeCount(userId, ENTITY_TYPE_USER);
+        model.addAttribute("followeeCount", followeeCount);
+        // 查询粉丝的数量
+        long followerCount = followService.findFollowerCount(ENTITY_TYPE_USER, userId);
+        model.addAttribute("followerCount", followerCount);
+        // 查询点赞数量
+        int likeCount = likeService.findUserLikeCount(userId);
+        model.addAttribute("likeCount",likeCount);
+        // 查询是否关注该用户
+        boolean hasFollowed = false;
+        // 要先判断当前用户是否登录
+        if (hostHolder.getUser() != null) {
+            hasFollowed = followService.hasFollowed(hostHolder.getUser().getId(), ENTITY_TYPE_USER, userId);
+        }
+        model.addAttribute("hasFollowed", hasFollowed);
+        return "/site/profile";
     }
 }

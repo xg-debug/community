@@ -13,7 +13,7 @@ public interface DiscussPostMapper {
     List<DiscussPost> selectDiscussPosts(int userId,int offset,int limit);
 
     /**
-     * 查询共有多少条帖子，这里注解的作用是给参数起个别名
+     * 查询共有多少条帖子，@Param注解的作用是给参数起个别名
      * 如果方法只有一个参数，并且在<if>标签里使用，则必须加别名
      */
     int selectDiscussPostRows(@Param("userId") int userId);
@@ -39,4 +39,16 @@ public interface DiscussPostMapper {
      * @return
      */
     int updateCommentCount(int postId, int commentCount);
+
+    /**
+     * 修改帖子类型
+     * @param id
+     * @param type 0--普通帖子，1--置顶帖子
+     * @return
+     */
+    int updateType(int id, int type);
+
+    int updateStatus(int id, int sattus);
+
+    int updateScore(int id, double score);
 }

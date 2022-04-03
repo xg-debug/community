@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 
+// 登录拦截器
 @Component
 public class LoginRequiredInterceptor implements HandlerInterceptor {
 
@@ -18,11 +19,16 @@ public class LoginRequiredInterceptor implements HandlerInterceptor {
     private HostHolder hostHolder;
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // handler为拦截的目标对象，如果是方法就拦截，否则就不拦截
         if (handler instanceof HandlerMethod) {
+            // 类型转换
             HandlerMethod handlerMethod = (HandlerMethod) handler;
+            // 获取拦截到的method对象
             Method method = handlerMethod.getMethod();
+            // 取该方法上的注解，这里是@LoginRequired
             LoginRequired loginRequired = method.getAnnotation(LoginRequired.class);
             if (loginRequired!=null && hostHolder.getUser() == null) {
+                // 如果没有登录就重定向到登录页面
                 response.sendRedirect(request.getContextPath() + "/login");
                 return false;
             }

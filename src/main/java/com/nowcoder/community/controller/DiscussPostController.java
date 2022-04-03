@@ -1,11 +1,10 @@
 package com.nowcoder.community.controller;
 
-import com.nowcoder.community.entity.Comment;
-import com.nowcoder.community.entity.DiscussPost;
-import com.nowcoder.community.entity.Page;
-import com.nowcoder.community.entity.User;
+import com.nowcoder.community.entity.*;
+import com.nowcoder.community.event.EventProducer;
 import com.nowcoder.community.service.CommentService;
 import com.nowcoder.community.service.DiscussPostService;
+import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.service.UserService;
 import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
@@ -33,6 +32,12 @@ public class DiscussPostController implements CommunityConstant {
     @Autowired
     private CommentService commentService;
 
+    @Autowired
+    private LikeService likeService;
+
+    @Autowired
+    private EventProducer eventProducer;
+
     @PostMapping("/add")
     @ResponseBody
     public String addDiscussPost(String title, String content) {
@@ -48,7 +53,13 @@ public class DiscussPostController implements CommunityConstant {
         post.setCreateTime(new Date());
         // 保存帖子
         discussPostService.addDiscussPost(post);
-
+        // 触发发帖事件
+        Event event = new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(user.getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(post.getId());
+        eventProducer.fireEvent(event);
         // 报错的情况，将来在别的地方统一处理
         return CommunityUtil.getJSONString(0,"发布成功！");
     }
@@ -57,11 +68,22 @@ public class DiscussPostController implements CommunityConstant {
     public String getDiscussPostDetail(@PathVariable("discussPostId") int discussPostId, Model model, Page page) {
         // 帖子
         DiscussPost post = discussPostService.findDiscussPostById(discussPostId);
+        int userId = post.getUserId();
         model.addAttribute("post",post);
 
         // 作者，也可以直接在sql语句中做一个表关联查询顺带根据帖子id将用户信息也查询出来
-        User user = userService.findUserById(discussPostId);
+        User user = userService.findUserById(userId);
         model.addAttribute("user",user);
+
+        // 点赞数量
+        long likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_POST, post.getId());
+        model.addAttribute("likeCount", likeCount);
+        // 点赞状态(传入的参数是当前用户的id)
+        // 判断当前用户是否登录，没登陆就返回0(未点赞)
+        int likeStatus = hostHolder.getUser() ==
+                null ? 0 : likeService.findEntityLikeStatus(hostHolder.getUser().getId(), ENTITY_TYPE_POST, post.getId());
+        model.addAttribute("likeStatus",likeStatus);
+        //System.out.println(user);
 
         // 评论分页信息
         page.setLimit(5);
@@ -81,7 +103,15 @@ public class DiscussPostController implements CommunityConstant {
                 // 评论
                 commentVo.put("comment",comment);
                 // 该评论的作者
-                commentVo.put("user",userService.findUserById(comment.getUserId()));
+                User commentUser = userService.findUserById(comment.getUserId());
+                commentVo.put("user",commentUser);
+                // 该评论的点赞数量
+                likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_COMMENT, comment.getId());
+                commentVo.put("likeCount", likeCount);
+                // 该评论的点赞状态(已点赞还是未点赞)
+                likeStatus = hostHolder.getUser() == null ? 0 : likeService.findEntityLikeStatus(hostHolder.getUser().getId(), ENTITY_TYPE_COMMENT, comment.getId());
+                commentVo.put("likeStatus", likeStatus);
+
 
                 // 查询评论的回复，注意：这里不再分页
                 // 回复列表
@@ -98,6 +128,12 @@ public class DiscussPostController implements CommunityConstant {
                         // 回复的目标，给谁回复消息
                         User target = reply.getTargetId() == 0 ? null : userService.findUserById(reply.getTargetId());
                         replyVo.put("target",target);
+                        // 回复的点赞数量
+                        likeCount = likeService.findEntityLikeCount(ENTITY_TYPE_COMMENT, reply.getId());
+                        replyVo.put("likeCount", likeCount);
+                        // 回复的点赞状态(已点赞还是未点赞)
+                        likeStatus = hostHolder.getUser() == null ? 0 : likeService.findEntityLikeStatus(hostHolder.getUser().getId(), ENTITY_TYPE_COMMENT, reply.getId());
+                        replyVo.put("likeStatus", likeStatus);
 
                         replyVoList.add(replyVo);
                     }
