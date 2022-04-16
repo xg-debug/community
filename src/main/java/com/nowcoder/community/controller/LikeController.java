@@ -8,7 +8,9 @@ import com.nowcoder.community.service.LikeService;
 import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostHolder;
+import com.nowcoder.community.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -27,12 +29,16 @@ public class LikeController implements CommunityConstant {
     @Autowired
     private EventProducer producer;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     /**
      * 点赞
      * @param entityType
      * @param entityId
      * @param entityUserId
      * @return
+     * 注意：like() 方法中的参数名 要与发起异步请求时携带的参数名一致，否则会报错
      */
     @LoginRequired
     @PostMapping("/like")
@@ -60,9 +66,17 @@ public class LikeController implements CommunityConstant {
                     .setEntityId(entityId)
                     .setData("postId", postId)
                     .setEntityUserId(entityUserId);
-            System.out.println("============="+event+"============");
             producer.fireEvent(event);
         }
-        return CommunityUtil.getJSONString(0,null,map);
+
+        // 如果是对帖子点的赞，需要计算帖子分数
+        if (entityType == ENTITY_TYPE_POST) {
+            // 计算帖子分数
+            String redisKey = RedisKeyUtil.getPostScoreKey();
+            // 为了防止重复计算某个帖子分数的现象出现，使用set集合去重
+            redisTemplate.opsForSet().add(redisKey, postId);
+
+        }
+        return CommunityUtil.getJSONString(0,null, map);
     }
 }

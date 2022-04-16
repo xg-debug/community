@@ -54,7 +54,7 @@ public class FollowController implements CommunityConstant {
                 .setEntityId(entityId)
                 .setEntityUserId(entityId);
         producer.fireEvent(event);
-        System.out.println("============="+event+"============");
+
         return CommunityUtil.getJSONString(0,"已关注!");
     }
 

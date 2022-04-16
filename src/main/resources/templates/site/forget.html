@@ -66,7 +66,7 @@
 					<div class="form-group row">
 						<label for="your-email" class="col-sm-2 col-form-label text-right">邮箱:</label>
 						<div class="col-sm-10">
-							<input type="email" class="form-control" id="your-email" placeholder="请输入您的邮箱!" required>
+							<input type="email" class="form-control" name="email" id="your-email" placeholder="请输入您的邮箱!" required>
 							<div class="invalid-feedback">
 								该邮箱已被注册!
 							</div>
@@ -75,19 +75,19 @@
 					<div class="form-group row mt-4">
 						<label for="verifycode" class="col-sm-2 col-form-label text-right">验证码:</label>
 						<div class="col-sm-6">
-							<input type="text" class="form-control" id="verifycode" placeholder="请输入验证码!">
+							<input type="text" class="form-control" name="code" id="verifycode" placeholder="请输入验证码!">
 							<div class="invalid-feedback">
 								验证码不正确!
 							</div>
 						</div>
 						<div class="col-sm-4">
-							<a th:href="@{/user/getCode}" class="btn btn-info form-control">获取验证码</a>
+							<a class="btn btn-info form-control" href="javascript:getCode();">获取验证码</a>
 						</div>
 					</div>	
 					<div class="form-group row mt-4">
 						<label for="your-password" class="col-sm-2 col-form-label text-right">新密码:</label>
 						<div class="col-sm-10">
-							<input type="password" class="form-control" id="your-password" placeholder="请输入新的密码!" required>
+							<input type="password" class="form-control" name="newPwd" id="your-password" placeholder="请输入新的密码!" required>
 							<div class="invalid-feedback">
 								密码长度不能小于8位!
 							</div>							
@@ -96,7 +96,7 @@
 					<div class="form-group row mt-4">
 						<div class="col-sm-2"></div>
 						<div class="col-sm-10 text-center">
-							<button type="submit" class="btn btn-info text-white form-control">重置密码</button>
+							<button type="submit" class="btn btn-info text-white form-control" id="submitBtn">重置密码</button>
 						</div>
 					</div>
 				</form>				
@@ -170,5 +170,14 @@
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
 	<script th:src="@{/js/global.js}"></script>
+	<script>
+		function getCode() {
+			$.post(
+					CONTEXT_PATH+"/user/getCode",
+					// 获取用户的邮箱,给该邮箱发送验证码
+					{"email":$("input[name='email']").val()}
+			);
+		}
+	</script>
 </body>
 </html>

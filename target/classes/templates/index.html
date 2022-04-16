@@ -3,6 +3,11 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<!-- 访问该页面时，在此处生成csrf令牌 -->
+<!--	<meta name="_csrf" th:content="${_csrf.token}">-->
+<!--	<meta name="_csrf_header" th:content="${_csrf.headerName}">-->
+
 	<link rel="icon" href="https://static.nowcoder.com/images/logo_87_87.png"/>
 	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" crossorigin="anonymous">
 	<link rel="stylesheet" th:href="@{/css/global.css}" />
@@ -66,10 +71,10 @@
 					<!-- 筛选条件 -->
 					<ul class="nav nav-tabs mb-3">
 						<li class="nav-item">
-							<a class="nav-link active" href="#">最新</a>
+							<a th:class="|nav-link ${orderMode == 0 ? 'active' : ''}|" th:href="@{/index(orderMode=0)}">最新</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">最热</a>
+							<a th:class="|nav-link ${orderMode == 1 ? 'active' : ''}|" th:href="@{/index(orderMode=1)}">最热</a>
 						</li>
 					</ul>
 					<button type="button" class="btn btn-primary btn-sm position-absolute rt-0" data-toggle="modal" data-target="#publishModal" th:if="${loginUser!=null}">我要发布</button>
@@ -122,7 +127,7 @@
 				<ul class="list-unstyled">
 					<li class="media pb-3 pt-3 mb-3 border-bottom" th:each="map:${discussPosts}">
 						<th:block th:if="${map.user!=null}">
-								<a th:href="@{|user/profile/${map.user.id}|}">
+								<a th:href="@{|/user/profile/${map.user.id}|}">
 									<img th:src="${map.user.headerUrl}" class="mr-4 rounded-circle" alt="用户头像" style="width:50px;height:50px;">
 								</a>
 							<div class="media-body">
@@ -230,7 +235,7 @@
 		</footer>
 	</div>
 
-	<script src="https://code.jquery.com/jquery-3.3.1.min.js" crossorigin="anonymous"></script>
+	<script src="https://s3.pstatp.com/cdn/expire-1-M/jquery/3.3.1/jquery.min.js" crossorigin="anonymous"></script>
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
 	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" crossorigin="anonymous"></script>
 	<script th:src="@{js/global.js}"></script>

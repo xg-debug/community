@@ -29,9 +29,9 @@ public class MessageInterceptor implements HandlerInterceptor {
             int letterUnreadCount = messageService.findLetterUnreadCount(user.getId(), null);
             int noticeUnreadCount = messageService.selectNoticeUnreadCount(user.getId(), null);
             int allUnreadCount = letterUnreadCount + noticeUnreadCount;
-            System.out.println("===="+letterUnreadCount+"====");
-            System.out.println("===="+noticeUnreadCount+"====");
-            System.out.println("===="+allUnreadCount+"====");
+//            System.out.println("===="+letterUnreadCount+"====");
+//            System.out.println("===="+noticeUnreadCount+"====");
+//            System.out.println("===="+allUnreadCount+"====");
             modelAndView.addObject("allUnreadCount", allUnreadCount);
         }
 

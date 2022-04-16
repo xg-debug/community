@@ -9,8 +9,8 @@ import java.util.List;
 @Mapper
 public interface DiscussPostMapper {
     // offset为起始页码，limit为每页显示多少条数据，方便sql语句的拼接
-
-    List<DiscussPost> selectDiscussPosts(int userId,int offset,int limit);
+    // orderMode--排序模式
+    List<DiscussPost> selectDiscussPosts(int userId,int offset,int limit, int orderMode);
 
     /**
      * 查询共有多少条帖子，@Param注解的作用是给参数起个别名
@@ -48,7 +48,19 @@ public interface DiscussPostMapper {
      */
     int updateType(int id, int type);
 
-    int updateStatus(int id, int sattus);
+    /**
+     * 修改帖子状态 0--正常，1--精华，2--拉黑
+     * @param id
+     * @param status
+     * @return
+     */
+    int updateStatus(int id, int status);
 
+    /**
+     * 修改帖子的分数
+     * @param id
+     * @param score
+     * @return
+     */
     int updateScore(int id, double score);
 }

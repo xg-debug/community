@@ -35,4 +35,25 @@
     <select id="selectCommentById" resultType="Comment">
         select <include refid="selectFields"> </include> from comment where id = #{id}
     </select>
+
+    <select id="selectCommentsByUserId" resultType="Comment">
+        select <include refid="selectFields"> </include> from comment
+        where entity_type = #{entityType} and entity_id = #{entityId} and user_id = #{userId}
+    </select>
+
+    <select id="selectCommentCountByUserId" resultType="int">
+        select count(id) from comment where status = 0 and user_id = #{userId}
+    </select>
+
+    <select id="selectPostIdsByUserId" resultType="Integer">
+        select entity_id from comment where status != 2 and entity_type = 1 and user_id = #{userId}
+    </select>
+
+    <select id="selectCommentIdByUserId" resultType="int">
+        select id from comment where status != 2 and entity_type = 1 and user_id = #{userId}
+    </select>
+
+    <select id="selectCommentByPostId" resultType="Comment">
+        select <include refid="selectFields"> </include> from comment where entity_id = #{postId}
+    </select>
 </mapper>

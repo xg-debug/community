@@ -9,7 +9,9 @@ import com.nowcoder.community.service.UserService;
 import com.nowcoder.community.util.CommunityConstant;
 import com.nowcoder.community.util.CommunityUtil;
 import com.nowcoder.community.util.HostHolder;
+import com.nowcoder.community.util.RedisKeyUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -38,6 +40,9 @@ public class DiscussPostController implements CommunityConstant {
     @Autowired
     private EventProducer eventProducer;
 
+    @Autowired
+    private RedisTemplate redisTemplate;
+
     @PostMapping("/add")
     @ResponseBody
     public String addDiscussPost(String title, String content) {
@@ -60,6 +65,12 @@ public class DiscussPostController implements CommunityConstant {
                 .setEntityType(ENTITY_TYPE_POST)
                 .setEntityId(post.getId());
         eventProducer.fireEvent(event);
+
+        // 计算帖子分数
+        String redisKey = RedisKeyUtil.getPostScoreKey();
+        // 为了防止重复计算某个帖子分数的现象出现，使用set集合去重
+        redisTemplate.opsForSet().add(redisKey, post.getId());
+
         // 报错的情况，将来在别的地方统一处理
         return CommunityUtil.getJSONString(0,"发布成功！");
     }
@@ -152,4 +163,60 @@ public class DiscussPostController implements CommunityConstant {
         }
         return "site/discuss-detail";
     }
+
+    // 置顶
+    @RequestMapping(path = "/top", method = RequestMethod.POST)
+    @ResponseBody
+    public String setTop(int postId) {
+        // 修改帖子类型
+        discussPostService.updateType(postId, 1);
+        // 同步到es库中，触发发帖事件
+        Event event = new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(postId);
+        eventProducer.fireEvent(event);
+
+        return CommunityUtil.getJSONString(0);
+    }
+
+    // 加精
+    @RequestMapping(path = "/wonderful", method = RequestMethod.POST)
+    @ResponseBody
+    public String setWonderful(int postId) {
+        // 修改帖子状态
+        discussPostService.updateStatus(postId, 1);
+        // 同步到es库中，触发发帖事件
+        Event event = new Event()
+                .setTopic(TOPIC_PUBLISH)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(postId);
+        eventProducer.fireEvent(event);
+
+        // 计算帖子分数
+        String redisKey = RedisKeyUtil.getPostScoreKey();
+        // 为了防止重复计算某个帖子分数的现象出现，使用set集合去重
+        redisTemplate.opsForSet().add(redisKey, postId);
+        return CommunityUtil.getJSONString(0);
+    }
+
+    // 删除(拉黑)
+    @RequestMapping(path = "/delete", method = RequestMethod.POST)
+    @ResponseBody
+    public String setDelete(int postId) {
+        // 修改帖子状态
+        discussPostService.updateStatus(postId, 2);
+        // 同步到es库中，触发删帖事件
+        Event event = new Event()
+                .setTopic(TOPIC_DELETE)
+                .setUserId(hostHolder.getUser().getId())
+                .setEntityType(ENTITY_TYPE_POST)
+                .setEntityId(postId);
+        eventProducer.fireEvent(event);
+
+        return CommunityUtil.getJSONString(0);
+    }
+
 }
